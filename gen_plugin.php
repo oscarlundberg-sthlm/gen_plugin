@@ -14,19 +14,73 @@ if ( !class_exists( 'generation_blog_feed_shortcode_plugin' ) ) {
 
         public function __construct() {
             add_action('init', array($this, 'shortcode_init'));
+            add_action('init', array($this, 'enqueue_style'));
+        }
+
+        public function enqueue_style() {
+            wp_enqueue_style('generation_blog_feed_style', plugin_dir_url( __FILE__ ) . '/style.css');
         }
 
         public function shortcode_init() {
             add_shortcode('generation_blog_feed', array($this, 'generation_blog_feed_shortcode_handler'));
         }
 
+        public function display( $query ) {
+            if ( $query->have_posts() ) {
+                ob_start();
+                ?>
+                <div class="blog-feed-container">
+                    <div class="blog-feed-listing">
+                    <?php
+                        while( $query->have_posts() ) {
+                            //build post
+                            $query->the_post(); ?>
+                            <div class="blog-feed-single-post">
+                                <h2><?php esc_html(the_title()) ?></h2>
+                                <p><?php esc_html(the_content()) ?></p>
+                            </div>
+                            <?php
+                        }
+                    ?>
+                    </div>
+                    <div class="blog-feed-nav">
+                        <?php
+                        // if (get_next_posts_link()) {
+                        //     next_posts_link('Next »');
+                        // }
+                        the_posts_pagination();
+                        ?>
+                    </div>
+                </div>
+                <?php
+            } else {
+                null;
+            }
+            wp_reset_postdata();
+            return ob_get_clean();
+        }
+
         public function generation_blog_feed_shortcode_handler( $atts = array() ) {
+
+            $atts = array_map('intval', $atts);
+
             [
                 'category_id' => $category_id,
                 'posts_per_page' => $posts_per_page,
                 'offset'=>$offset
             ] = $atts;
-            return "$category_id, $posts_per_page, $offset";
+
+            $query = new WP_Query( array( 
+                'category_id' =>  $category_id,
+                'posts_per_page' =>  $posts_per_page,
+                'offset' => $offset,
+            ) );
+
+            echo '<script>console.log(' . json_encode($query) . ')</script>';
+
+            $generatedContent = $this->display( $query );
+
+            return $generatedContent;
         }
     }    
 
