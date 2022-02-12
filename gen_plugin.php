@@ -22,12 +22,13 @@ if ( !class_exists( 'generation_blog_feed_shortcode_plugin' ) ) {
         }
 
         public function shortcode_init() {
-            add_shortcode('generation_blog_feed', array($this, 'generation_blog_feed_shortcode_handler'));
+            add_shortcode('generation_blog_feed', array($this, 'generation_blog_feed_shortcode_handler')); // "callable"
         }
 
         public function display( $query ) {
             if ( $query->have_posts() ) {
                 ob_start();
+
                 ?>
                 <div class="blog-feed-container">
                     <div class="blog-feed-listing">
@@ -36,25 +37,15 @@ if ( !class_exists( 'generation_blog_feed_shortcode_plugin' ) ) {
                             //build post
                             $query->the_post(); ?>
                             <div class="blog-feed-single-post">
-                                <h2><?php esc_html(the_title()) ?></h2>
-                                <p><?php esc_html(the_content()) ?></p>
+                                <h2><?php echo wp_kses_post(get_the_title()) ?></h2>
+                                <?php echo wp_kses_post(get_the_content()) ?>
                             </div>
                             <?php
                         }
                     ?>
                     </div>
-                    <div class="blog-feed-nav">
-                        <?php
-                        // if (get_next_posts_link()) {
-                        //     next_posts_link('Next »');
-                        // }
-                        the_posts_pagination();
-                        ?>
-                    </div>
                 </div>
                 <?php
-            } else {
-                null;
             }
             wp_reset_postdata();
             return ob_get_clean();
